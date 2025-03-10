@@ -1,4 +1,4 @@
-// Wait for DOM to be ready
+
 document.addEventListener('DOMContentLoaded', () => {
     const modelConfig = {
         hair: {
@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loadShirtModel() {
             const loader = new THREE.GLTFLoader();
-            const modelPath = modelConfig.shirt[this.params.shirt] || modelConfig.shirt["shirt"];
+            const modelPath = modelConfig.shirt[this.params.shirt] || modelConfig.shirt["blue"];
             loader.load(
                 modelPath, 
                 (gltf) => {
