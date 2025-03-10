@@ -6,9 +6,10 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         shirt: {
           "blue": "../models/shirt.glb",
+          "bw": "../models/shirt1.glb"
         },
         face: {
-          "face1": "../models/character.glb"
+          "face1": "../models/character 2.glb"
         }
       };
     class SceneManager {
@@ -23,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.clock = new THREE.Clock();
             
             this.params = this.getQueryParams();
-            console.log('URL Parameters:', this.params);
+            
 
             // Store all models
             this.models = {
@@ -74,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
             light.position.set(1, 1, 1);
             this.scene.add(light);
             this.scene.add(new THREE.AmbientLight(0x404040));
+            
 
             // Load all models
             this.loadCharacterModel();
@@ -83,8 +85,9 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loadCharacterModel() {
             const loader = new THREE.GLTFLoader();
+            const modelPath = modelConfig.face[this.params.face] || modelConfig.face["face1"];
             loader.load(
-                '../models/character 2.glb', 
+                modelPath, 
                 (gltf) => {
                     // Add model to scene
                     this.models.character = gltf.scene;
@@ -101,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             action.play();
                         });
                     }
-
+                    
                     this.models.character.position.set(0, -0.5, 0);
                     this.models.character.scale.set(1, 1, 1);
                     
@@ -150,17 +153,30 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loadShirtModel() {
             const loader = new THREE.GLTFLoader();
+            const modelPath = modelConfig.shirt[this.params.shirt] || modelConfig.shirt["shirt"];
             loader.load(
-                '../models/shirt.glb', 
+                modelPath, 
                 (gltf) => {
                     // Add shirt model to scene
                     this.models.shirt = gltf.scene;
                     this.scene.add(this.models.shirt);
                     
                     // Shirt should initially be at the same position as the character
-                    this.models.shirt.position.set(0, -2.25, 0);
-                    this.models.shirt.scale.set(0.06, 0.06, 0.06);
+                    //shirt
                     
+                    if(modelPath==="../models/shirt.glb"){
+                        this.models.shirt.position.set(0, -2.25, 0);
+                        this.models.shirt.scale.set(0.06, 0.06, 0.06);
+                    }
+                    else{
+                        //shirt1
+                        this.models.shirt.position.set(0, -10.75, 0);
+                        this.models.shirt.scale.set(6.5,6.5, 6.5);
+                    }
+                    
+                    
+                    
+
                     this.loadingStatus.shirt = true;
                     this.positionAllModels();
                 },
@@ -205,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.models.shirt.position.z = this.models.character.position.z;
             
             // You may need to adjust these positions based on your specific models
-            console.log('Models positioned');
+            // console.log('Models positioned');
         }
 
         animate = () => {
@@ -216,7 +232,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const delta = this.clock.getDelta();
                 this.mixer.update(delta);
             }
-            
             this.renderer.render(this.scene, this.camera);
         }
 
