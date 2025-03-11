@@ -37,8 +37,6 @@ app.listen(port, () => {
   console.log(`- Capture frames: http://localhost:${port}/api/capture`);
   console.log(`- Create video: http://localhost:${port}/api/create-video`);
   console.log(`- Create video with audio: http://localhost:${port}/api/create-video-with-audio (POST)`);
-  console.log(`- Fetch Vimeo videos: http://localhost:${port}/api/videos`);
-  console.log(`- Upload to Vimeo: http://localhost:${port}/api/upload-to-vimeo (POST)`);
 });
 
 module.exports = app;

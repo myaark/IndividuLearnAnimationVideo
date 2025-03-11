@@ -69,7 +69,6 @@ function uploadVideo(filePath, options = {}, progressCallback = null) {
     }
   });
 }
-
 module.exports = {
   client,
   fetchVideos,

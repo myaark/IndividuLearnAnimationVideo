@@ -8,6 +8,9 @@ const ffmpegService = require('../services/ffmpegService');
 const directoryService = require('../services/directoryService');
 const vimeoService = require('../services/vimeoService');
 const config = require('../config/config');
+const { textToSpeech } = require('../services/TTSservice'); 
+const { uploadVideo }= require('../services/vimeoService')
+
 
 // Route to capture frames only
 router.get('/capture', async (req, res) => {
@@ -54,54 +57,69 @@ router.get('/create-video', async (req, res) => {
 // Route to create video with audio
 router.post('/create-video-with-audio', express.json(), async (req, res) => {
   try {
-    // Set model parameters from query
-    captureService.setModelParams({
-      hair: req.query.hair,
-      shirt: req.query.shirt,
-      face: req.query.face
-    });
-    
-    // Make sure audio file exists
-    const audioPath = path.join(process.cwd(), req.body.audioFile);
-    if (!fs.existsSync(audioPath)) {
-      throw new Error('Audio file not found');
-    }
+      // Extract text from request body
+      const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
 
-    await directoryService.setupDirectories();
-    
-    // Get audio duration
-    const duration = await ffmpegService.getAudioDuration(audioPath);
-    console.log(`Audio duration: ${duration} seconds`);
-    
-    // Capture frames based on audio duration
-    await captureService.captureFrames(duration, config.ffmpeg.frameRate);
-    
-    // Create silent video
-    const tempVideoName = `temp_${Date.now()}.mp4`;
-    const videoPath = await ffmpegService.createSilentVideo(tempVideoName, duration, config.ffmpeg.frameRate);
-    
-    // Merge video with audio
-    const finalVideoName = `final_${Date.now()}.mp4`;
-    const finalPath = await ffmpegService.mergeVideoWithAudio(videoPath, audioPath, finalVideoName);
+      // Generate audio using Eleven Labs API
+      const audioPath = await textToSpeech(textToConvert);
+      console.log(audioPath)
 
-    // Clean up temporary files
-    fs.promises.unlink(videoPath).catch(err => console.error('Error deleting temp video:', err));
-    await directoryService.cleanupFrames();
-    
-    // Send final video URL
-    const videoUrl = `/output/${path.basename(finalPath)}`;
-    res.json({
-      success: true,
-      message: 'Video created successfully with audio',
-      videoUrl: videoUrl,
-      duration: duration
-    });
+
+      captureService.setModelParams({
+          hair: req.query.hair,
+          shirt: req.query.shirt,
+          face: req.query.face
+      });
+
+      await directoryService.setupDirectories();
+      
+      // Get the duration of generated audio
+      const duration = await ffmpegService.getAudioDuration(audioPath);
+      console.log(`Audio duration: ${duration} seconds`);
+      
+      // Capture video frames
+      await captureService.captureFrames(duration, config.ffmpeg.frameRate);
+      
+      // Create a silent video
+      const tempVideoName = `temp_${Date.now()}.mp4`;
+      const videoPath = await ffmpegService.createSilentVideo(tempVideoName, duration, config.ffmpeg.frameRate);
+      
+      // Merge video with generated audio
+      const finalVideoName = `final_${Date.now()}.mp4`;
+      const finalPath = await ffmpegService.mergeVideoWithAudio(videoPath, audioPath, finalVideoName);
+      
+      const vimeoResponse = await uploadVideo(finalPath, {
+          name: `Generated Video ${Date.now()}`,
+          description: `Video generated from text: "${textToConvert.substring(0, 100)}..."`,
+          privacy: { view: 'anybody' } // or 'password', 'nobody', etc.
+      });
+
+      // Clean up temporary files
+      // fs.promises.unlink(videoPath).catch(err => console.error('Error deleting temp video:', err));
+      await directoryService.cleanupFrames();
+      
+      // Send final video URL and Vimeo info
+      const videoUrl = `/output/${path.basename(finalPath)}`;
+      res.json({
+          success: true,
+          message: 'Video created successfully and uploaded to Vimeo',
+          videoUrl: videoUrl,
+          vimeoUri: vimeoResponse.uri,
+          vimeoLink: vimeoResponse.link,
+          duration: duration
+      });
+      res.json({
+          success: true,
+          message: 'Video created successfully with generated audio',
+          videoUrl: videoUrl,
+          duration: duration
+      });
   } catch (error) {
-    console.error('Error:', error);
-    res.status(500).json({
-      success: false,
-      message: `Error creating video: ${error.message}`
-    });
+      console.error('Error:', error);
+      res.status(500).json({
+          success: false,
+          message: `Error creating video: ${error.message}`
+      });
   }
 });
 
