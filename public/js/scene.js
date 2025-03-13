@@ -1,8 +1,9 @@
-
 document.addEventListener('DOMContentLoaded', () => {
     const modelConfig = {
         hair: {
+          "default":"",
           "hair1": "../models/hair.glb",
+          
         },
         shirt: {
           "blue": "../models/shirt.glb",
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Load all models
             this.loadCharacterModel();
-            // this.loadHairModel();
+            this.loadHairModel();
             this.loadShirtModel();
         }
         
@@ -109,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.models.character.scale.set(1, 1, 1);
                     
                     this.loadingStatus.character = true;
-                    this.positionAllModels();
+                    // this.positionAllModels();
                 },
                 // Progress callback
                 (xhr) => {
@@ -124,8 +125,10 @@ document.addEventListener('DOMContentLoaded', () => {
         
         loadHairModel() {
             const loader = new THREE.GLTFLoader();
-            const modelPath = modelConfig.hair[hairStyle] || modelConfig.hair.default;
-            
+            const modelPath = modelConfig.hair[this.params.hair] || modelConfig.hair['default'];
+            if(modelPath===""){
+                return;
+            }
             console.log(`Loading hair model: ${modelPath}`);
             loader.load(
                 modelPath, 
@@ -134,15 +137,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.scene.add(this.models.hair);
                     
                     // Hair should initially be at the same position as the character
-                    this.models.hair.position.set(0, -2.5, 3);
-                    this.models.hair.scale.set(2, 2 ,2);
+                    this.models.hair.position.set(0, -15.5, 0);
+                    this.models.hair.scale.set(10, 10 ,10);
                     
                     this.loadingStatus.hair = true;
-                    this.positionAllModels();
+                    console.log(this.models.hair.position)
+                    console.log(this.models.hair.scale)
+                    // this.positionAllModels();
                 },
                 // Progress callback
                 (xhr) => {
                     console.log(`Hair model: ${(xhr.loaded / xhr.total * 100)}% loaded`);
+                    
                 },
                 // Error callback
                 (error) => {
@@ -178,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
 
                     this.loadingStatus.shirt = true;
-                    this.positionAllModels();
+                    // this.positionAllModels();
                 },
                 // Progress callback
                 (xhr) => {
@@ -211,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.models.hair.position.y = characterTop;
             
             // Position shirt directly below the character's body
-            this.models.shirt.position.y = characterBottom;
+            // this.models.shirt.position.y = characterBottom;
             
             // Make sure all models are aligned horizontally
             this.models.hair.position.x = this.models.character.position.x;

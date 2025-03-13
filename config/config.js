@@ -12,7 +12,7 @@ module.exports = {
   
   ffmpeg: {
     path: "C:\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe",
-    frameRate: 30
+    frameRate:30
   },
   
   directories: {

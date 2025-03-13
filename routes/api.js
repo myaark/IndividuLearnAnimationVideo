@@ -10,6 +10,7 @@ const vimeoService = require('../services/vimeoService');
 const config = require('../config/config');
 const { textToSpeech } = require('../services/TTSservice'); 
 const { uploadVideo }= require('../services/vimeoService')
+const combineAnimations = require("../services/2dvideoService")
 
 
 // Route to capture frames only
@@ -17,7 +18,7 @@ router.get('/capture', async (req, res) => {
   try {
     await directoryService.setupDirectories();
     console.log('Starting frame capture...');
-    await captureService.captureFrames(10, config.ffmpeg.frameRate);
+    await captureService.captureFrames(2, config.ffmpeg.frameRate);
     res.send('Frames captured successfully!');
   } catch (error) {
     console.error('Error:', error);
@@ -54,6 +55,94 @@ router.get('/create-video', async (req, res) => {
   }
 });
 
+router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
+  try {
+      // Extract text from request body
+      const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
+
+      // Generate audio using Eleven Labs API
+      const audioPath = await textToSpeech(textToConvert);
+      console.log(audioPath);
+
+      // Get model parameters
+      const hairColor = req.query.hair || "BLACK";
+      const shirtColor = req.query.shirt || "BLACK";
+      
+      // Set model params for reference (in case needed elsewhere)
+      captureService.setModelParams({
+          hair: hairColor,
+          shirt: shirtColor,
+          face: req.query.face
+      });
+
+      await directoryService.setupDirectories();
+      
+      // Get the duration of generated audio
+      const audioDuration = await ffmpegService.getAudioDuration(audioPath);
+      console.log(`Audio duration: ${audioDuration} seconds`);
+      
+      // Define video files based on hair and shirt parameters only
+      const videoFiles = [
+          `public/animations/happyHAIR${hairColor}SHIRT${shirtColor}.mp4`,
+          `public/animations/neutralHAIR${hairColor}SHIRT${shirtColor}.mp4`
+      ];
+      
+      // Create output filename
+      const tempVideoName = `temp_${Date.now()}.mp4`;
+      
+      // Fix: Define outputDir if config.outputDir is not available
+      const outputDir = config.outputDir || path.join(process.cwd(), 'output');
+      const videoOutputPath = path.join(outputDir, tempVideoName);
+      
+      // Use combineAnimations instead of captureFrames and createSilentVideo
+      const videoPath = await combineAnimations({
+          videoFiles: videoFiles,
+          outputFile: videoOutputPath,
+          duration: audioDuration, // Use audio duration for the video
+          loop: true,
+          fadeTransition: 0.5,
+          rootDir: process.cwd()
+      });
+      
+      // Merge video with generated audio
+      const finalVideoName = `final_${Date.now()}.mp4`;
+      const finalPath = await ffmpegService.mergeVideoWithAudio(videoPath, audioPath, finalVideoName);
+      
+      // Upload to Vimeo if configured
+      let vimeoResponse = null;
+      if (typeof uploadVideo === 'function') {
+          vimeoResponse = await uploadVideo(finalPath, {
+              name: `Generated Video ${Date.now()}`,
+              description: `Video generated from text: "${textToConvert.substring(0, 100)}..."`,
+              privacy: { view: 'anybody' }
+          });
+      }
+      
+      // Prepare response
+      const videoUrl = `/output/${path.basename(finalPath)}`;
+      const response = {
+          success: true,
+          message: 'Video created successfully with generated audio',
+          videoUrl: videoUrl,
+          duration: audioDuration
+      };
+      
+      // Add Vimeo info if available
+      if (vimeoResponse) {
+          response.message = 'Video created successfully and uploaded to Vimeo';
+          response.vimeoUri = vimeoResponse.uri;
+          response.vimeoLink = vimeoResponse.link;
+      }
+      
+      res.json(response);
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).json({
+          success: false,
+          message: `Error creating video: ${error.message}`
+      });
+  }
+});
 // Route to create video with audio
 router.post('/create-video-with-audio', express.json(), async (req, res) => {
   try {

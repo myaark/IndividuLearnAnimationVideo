@@ -29,6 +29,7 @@ function setModelParams(params) {
  */
 async function captureFrames(duration, fps = config.ffmpeg.frameRate) {
   const numFrames = Math.ceil(duration * fps);
+  console.log("FPS",fps)
   const browser = await puppeteer.launch({
     headless: 'new',
     args: ['--no-sandbox', '--disable-setuid-sandbox']
@@ -79,7 +80,7 @@ async function captureFrames(duration, fps = config.ffmpeg.frameRate) {
       });
       
       console.log(`Captured frame ${i + 1}/${numFrames}`);
-      await delay(1000 / fps);
+      // await delay(1000 / fps);
     }
     
     console.log('Frame capture complete');
