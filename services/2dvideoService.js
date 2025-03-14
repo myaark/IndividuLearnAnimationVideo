@@ -11,18 +11,19 @@ const execAsync = promisify(exec);
  * @param {string[]} options.videoFiles - Array of paths to MP4 video files to combine
  * @param {string} options.outputFile - Path for the generated output video
  * @param {number} options.duration - Duration of the output video in seconds
+ * @param {string[]} [options.emotions=[]] - Array of emotions detected for each sentence in the text
  * @param {boolean} [options.loop=true] - Whether to loop videos if specified duration is longer than total video duration
  * @param {number} [options.fadeTransition=0.5] - Duration of fade transition between videos in seconds
  * @returns {Promise<string>} - Path to the output file
- */
-async function combineAnimations(options) {
+ */async function combineAnimations(options) {
   const {
     videoFiles,
     outputFile,
     duration,
     loop = true,
     fadeTransition = 0.5,
-    rootDir = process.cwd() // Default to current working directory
+    rootDir = process.cwd(), // Default to current working directory
+    emotions = [] 
   } = options;
   
   // Helper function to resolve paths relative to root directory
@@ -61,10 +62,44 @@ async function combineAnimations(options) {
 
   try {
     console.log(`Target duration: ${duration} seconds`);
+    console.log(`Detected emotions: ${JSON.stringify(emotions)}`);
 
-    // Get info about each video
+    // Select videos based on emotions
+    let selectedVideoFiles = [];
+    
+    // If we have emotions, use them to select videos
+    if (emotions && emotions.length > 0) {
+      // Map each emotion to a video file from the provided files
+      for (let i = 0; i < emotions.length; i++) {
+        const emotion = emotions[i].toLowerCase();
+        
+        // Default to the neutral video (assumed to be index 1 based on your code)
+        let selectedVideoIndex = 1; // Default to neutral
+        
+        // Map emotion to video file index
+        if (emotion === 'joy' || emotion === 'optimism') {
+          selectedVideoIndex = 0; // Happy video (assumed to be index 0)
+        }
+        // Add more emotion mappings here as needed
+        
+        // Ensure we don't exceed the array bounds
+        if (selectedVideoIndex < resolvedVideoFiles.length) {
+          selectedVideoFiles.push(resolvedVideoFiles[selectedVideoIndex]);
+        } else {
+          // Fallback to first video if index is out of bounds
+          selectedVideoFiles.push(resolvedVideoFiles[0]);
+        }
+      }
+    } else {
+      // If no emotions provided, use all video files in order
+      selectedVideoFiles = resolvedVideoFiles;
+    }
+    
+    console.log(`Selected video files based on emotions: ${selectedVideoFiles.length}`);
+
+    // Get info about each selected video
     const videoInfo = await Promise.all(
-      resolvedVideoFiles.map(async (file, index) => {
+      selectedVideoFiles.map(async (file, index) => {
         // Check if file exists before processing
         if (!fs.existsSync(file)) {
           throw new Error(`Video file not found: ${file}`);
@@ -189,32 +224,3 @@ async function combineAnimations(options) {
 
 module.exports = combineAnimations;
 
-// Example usage:
-
-// const combineAnimations = require('./combineAnimations');
-// const path = require('path');
-
-// async function run() {
-//   try {
-//     // Define the root directory (one level up from where this script is running)
-//     const rootDir = path.resolve(__dirname, '../');
-    
-//     const result = await combineAnimations({
-//         videoFiles: [
-//             'public/animations/happyHAIRBLACKSHIRTBLACK.mp4',
-//             'public/animations/neutralHAIRBLACKSHIRTBLACK.mp4',
-//             ],
-//       outputFile: 'public/output/final_animation.mp4',
-//       duration: 60, // 60 seconds output video
-//       loop: true,
-//       fadeTransition: 0.5,
-//       rootDir: rootDir // Pass the root directory
-//     });
-    
-//     console.log('Animation created successfully:', result);
-//   } catch (error) {
-//     console.error('Failed to create animation:', error);
-//   }
-// }
-
-// run();

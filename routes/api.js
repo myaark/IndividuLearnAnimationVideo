@@ -11,6 +11,7 @@ const config = require('../config/config');
 const { textToSpeech } = require('../services/TTSservice'); 
 const { uploadVideo }= require('../services/vimeoService')
 const combineAnimations = require("../services/2dvideoService")
+const {sendTextForPrediction}=require("../services/NLPservice")
 
 
 // Route to capture frames only
@@ -60,6 +61,9 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
       // Extract text from request body
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
 
+      const emotionPrediction = await sendTextForPrediction(textToConvert);
+      const emotions = emotionPrediction.emotionsArray;
+
       // Generate audio using Eleven Labs API
       const audioPath = await textToSpeech(textToConvert);
       console.log(audioPath);
@@ -101,7 +105,8 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
           duration: audioDuration, // Use audio duration for the video
           loop: true,
           fadeTransition: 0.5,
-          rootDir: process.cwd()
+          rootDir: process.cwd(),
+          emotions: emotions 
       });
       
       // Merge video with generated audio
