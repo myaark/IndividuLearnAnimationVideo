@@ -1,15 +1,12 @@
-// app.js - Main application file
 const express = require('express');
 const path = require('path');
 const config = require('./config/config');
-const apiRoutes = require('./routes/api');
+const apiRoutes = require('./routes/videoCreationRoutes');
 const ffmpegService = require('./services/ffmpegService');
 
-// Initialize express app
 const app = express();
 const port = config.port;
 
-// Initialize FFmpeg
 ffmpegService.initFFmpeg()
   .then(() => console.log('FFmpeg initialized successfully'))
   .catch(err => {
@@ -34,9 +31,8 @@ app.get('/', (req, res) => {
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
   console.log('API endpoints:');
-  console.log(`- Capture frames: http://localhost:${port}/api/capture`);
-  console.log(`- Create video: http://localhost:${port}/api/create-video`);
-  console.log(`- Create video with audio: http://localhost:${port}/api/create-video-with-audio (POST)`);
+  console.log(`- Create video with audio: http://localhost:${port}/api/create-3dvideo-with-audio (POST)`);
+  console.log(`- Create video with audio: http://localhost:${port}/api/create-2dvideo-with-audio (POST)`);
 });
 
 module.exports = app;
