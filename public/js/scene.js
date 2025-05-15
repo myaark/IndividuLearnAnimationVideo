@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
           "bw": "../models/shirt1.glb"
         },
         face: {
-          "face1": "../models/character 2.glb"
+          "face1": "../models/2 face .glb"
         }
       };
     class SceneManager {

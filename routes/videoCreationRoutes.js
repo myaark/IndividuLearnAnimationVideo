@@ -7,21 +7,21 @@ const ffmpegService = require('../services/ffmpegService');
 const directoryService = require('../services/directoryService');
 const config = require('../config/config');
 const { textToSpeech } = require('../services/TTSservice'); 
-const { uploadVideo }= require('../services/vimeoService')
-const combineAnimations = require("../services/2dvideoService")
-const {sendTextForPrediction}=require("../services/NLPservice")
-
+const { uploadVideo }= require('../services/vimeoService');
+const combineAnimations = require("../services/2dvideoService");
+const {sendTextForPrediction}=require("../services/NLPservice");
+const cleanText = require("../services/transcriptCleanUpService")
 
 router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
   try {
       // Extract text from request body
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
-
-      const emotionPrediction = await sendTextForPrediction(textToConvert);
+      const cleanedText = cleanText(textToConvert)
+      const emotionPrediction = await sendTextForPrediction(cleanedText);
       const emotions = emotionPrediction.emotionsArray;
 
       // Generate audio using Eleven Labs API
-      const audioPath = await textToSpeech(textToConvert);
+      const audioPath = await textToSpeech(cleanedText);
       console.log(audioPath);
 
       // Get model parameters
@@ -74,7 +74,7 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
       if (typeof uploadVideo === 'function') {
           vimeoResponse = await uploadVideo(finalPath, {
               name: `Generated Video ${Date.now()}`,
-              description: `Video generated from text: "${textToConvert.substring(0, 100)}..."`,
+              description: `Video generated from text: "${cleanedText.substring(0, 100)}..."`,
               privacy: { view: 'anybody' }
           });
       }
@@ -109,7 +109,8 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
 router.post('/create-3dvideo-with-audio', express.json(), async (req, res) => {
   try {
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
-      const audioPath = await textToSpeech(textToConvert);
+      const cleanedText = cleanText(textToConvert)
+      const audioPath = await textToSpeech(cleanedText);
       console.log(audioPath)
 
       captureService.setModelParams({
@@ -129,7 +130,7 @@ router.post('/create-3dvideo-with-audio', express.json(), async (req, res) => {
       
       const vimeoResponse = await uploadVideo(finalPath, {
           name: `Generated Video ${Date.now()}`,
-          description: `Video generated from text: "${textToConvert.substring(0, 100)}..."`,
+          description: `Video generated from text: "${cleanedText.substring(0, 100)}..."`,
           privacy: { view: 'anybody' } 
       });
 
