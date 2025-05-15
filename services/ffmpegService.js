@@ -2,9 +2,11 @@
 const ffmpeg = require('fluent-ffmpeg');
 const path = require('path');
 const config = require('../config/config');
-
+const ffmpegPath = require('ffmpeg-static');
+// const ffmpeg = require('fluent-ffmpeg');
+ffmpeg.setFfmpegPath(ffmpegPath);
 // Set FFmpeg path
-ffmpeg.setFfmpegPath(config.ffmpeg.path);
+// ffmpeg.setFfmpegPath(config.ffmpeg.path);
 
 /**
  * Initialize FFmpeg and test if it's working

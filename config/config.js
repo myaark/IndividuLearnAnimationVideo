@@ -1,7 +1,7 @@
 require('dotenv').config(); 
 
 module.exports = {
-  port: process.env.PORT || 3000,
+  port: 3001,
   
   vimeo: {
     clientId: process.env.VIMEO_CLIENT_ID,
@@ -11,7 +11,7 @@ module.exports = {
   elevenLabsApiKey: process.env.ELEVEN_LABS_API_KEY,
   
   ffmpeg: {
-    path: "C:\\ffmpeg-master-latest-win64-gpl\\bin\\ffmpeg.exe",
+    path: "C:\\UserszainhDownloads\\ffmpeg-7.1-essentials_build\\ffmpeg-7.1-essentials_build\\bin\\ffmpeg.exe",
     frameRate:30
   },
   

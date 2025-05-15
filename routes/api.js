@@ -59,7 +59,7 @@ router.get('/create-video', async (req, res) => {
 router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
   try {
       // Extract text from request body
-      const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
+      const textToConvert = req.body.text || "Wow, what an audience. But if I'm being honest, I don't care what you think of my talk. I don't. I care what the Internet thinks of my talk because they're the ones who get it seen and get it shared. And I think that's where most people get it wrong. They're talking to you here instead of talking to you. Random person scrolling Facebook thanks for the click. You see, back in 2009 we all had these weird little things called attention spans. Yeah, they're gone. They're gone. We killed them. They're dead. I'm trying to think of the last time I watched an 18 minute TED talk. It's been years. Literally years. So if you're giving a TED Talk, keep it quick. I'm doing mine in under a minute. I'm at 44 seconds right now. That means we got time for one final joke. Why are balloons so expensive? Inflation.";
 
       const emotionPrediction = await sendTextForPrediction(textToConvert);
       const emotions = emotionPrediction.emotionsArray;
