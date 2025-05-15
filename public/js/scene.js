@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
           "bw": "../models/shirt1.glb"
         },
         face: {
-          "face1": "../models/character 2.glb"
+          "face1": "../models/2 face .glb"
         }
       };
     class SceneManager {
@@ -229,18 +229,66 @@ document.addEventListener('DOMContentLoaded', () => {
             // You may need to adjust these positions based on your specific models
             // console.log('Models positioned');
         }
-
+        // stepAnimation(timeStep) {
+        //     if (this.mixer) {
+        //         this.mixer.update(timeStep);
+        //     }
+        //     this.renderer.render(this.scene, this.camera);
+        // }
+        // Add to SceneManager class
+startRecording(duration, fps = 30) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Get the canvas element
+            const canvas = this.renderer.domElement;
+            
+            // Create a stream from the canvas with specified frame rate
+            const stream = canvas.captureStream(fps);
+            
+            // Set up media recorder with appropriate options
+            const options = { mimeType: 'video/webm;codecs=vp9' };
+            const mediaRecorder = new MediaRecorder(stream, options);
+            
+            // Array to store chunks of video data
+            const chunks = [];
+            
+            // Event listeners
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+            
+            mediaRecorder.onstop = () => {
+                // Create blob from chunks
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                resolve(blob);
+            };
+            
+            // Start recording
+            mediaRecorder.start();
+            
+            // Stop recording after specified duration
+            setTimeout(() => {
+                mediaRecorder.stop();
+            }, duration * 1000);
+        } catch (err) {
+            reject(err);
+        }
+    });
+}
         animate = () => {
             requestAnimationFrame(this.animate);
             
-            // Update animations
             if (this.mixer) {
-                const delta = this.clock.getDelta();
-                this.mixer.update(delta);
+              let delta = this.clock.getDelta();
+              // don’t let one big pause advance more than 1/fps
+              const maxStep = 1 / /* your fps, e.g. */ 30;
+              this.mixer.update(Math.min(delta, maxStep));
             }
+            
             this.renderer.render(this.scene, this.camera);
-        }
-
+          }
         createGradientBackground() {
             const canvas = document.createElement('canvas');
             canvas.width = 2;
@@ -274,4 +322,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the scene
     const sceneManager = new SceneManager();
     console.log('Scene initialized');
+    // window.stepAnimationByTime = (timeStep) => {
+    //     sceneManager.stepAnimation(timeStep);
+    // };
+    window.startRecording = (duration, fps) => {
+        return sceneManager.startRecording(duration, fps);
+    };
 });

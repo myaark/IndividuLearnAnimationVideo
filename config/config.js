@@ -1,7 +1,7 @@
 require('dotenv').config(); 
 
 module.exports = {
-  port: 3001,
+  port: process.env.PORT || 3001,
   
   vimeo: {
     clientId: process.env.VIMEO_CLIENT_ID,

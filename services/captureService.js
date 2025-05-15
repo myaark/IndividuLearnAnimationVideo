@@ -1,37 +1,46 @@
-// services/captureService.js
 const puppeteer = require('puppeteer');
 const path = require('path');
 const config = require('../config/config');
 const { delay, buildUrl } = require('../utils/helpers');
+const fs = require('fs'); 
 
-/**
- * Global model state variables
- */
 let modelState = {
   hair: null,
   shirt: null,
   face: null
 };
 
-/**
- * Set model parameters
- * @param {Object} params - Model parameters
- */
+
+async function convertWebmToMp4(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    const ffmpeg = require('fluent-ffmpeg');
+    
+    ffmpeg(inputPath)
+      .outputOptions([
+        '-c:v libx264',     // Use H.264 codec for video
+        '-preset fast',     // Encoding preset (options: ultrafast, superfast, veryfast, faster, fast, medium, slow, slower, veryslow)
+        '-crf 22',          // Constant Rate Factor (lower = better quality, higher = smaller file)
+        '-pix_fmt yuv420p', // Pixel format for better compatibility
+      ])
+      .output(outputPath)
+      .on('end', () => {
+        console.log(`Successfully converted ${inputPath} to ${outputPath}`);
+        resolve(outputPath);
+      })
+      .on('error', (err) => {
+        console.error(`Error converting video: ${err.message}`);
+        reject(err);
+      })
+      .run();
+  });
+}
 function setModelParams(params) {
   modelState = { ...modelState, ...params };
 }
 
-/**
- * Capture frames using Puppeteer
- * @param {number} duration - Duration in seconds
- * @param {number} fps - Frames per second
- * @returns {Promise<void>}
- */
-async function captureFrames(duration, fps = config.ffmpeg.frameRate) {
-  const numFrames = Math.ceil(duration * fps);
-  console.log("FPS",fps)
+async function captureVideo(duration, fps = config.ffmpeg.frameRate) {
   const browser = await puppeteer.launch({
-    headless: 'new',
+    headless: false, 
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
   
@@ -56,34 +65,45 @@ async function captureFrames(duration, fps = config.ffmpeg.frameRate) {
     await page.waitForSelector('canvas#scene');
     
     console.log('Waiting for scene initialization...');
-    await delay(1000);
+    await delay(2000);
     
-    const isSceneReady = await page.evaluate(() => {
-      return document.querySelector('canvas#scene') !== null;
+    const hasRecordingFunction = await page.evaluate(() => {
+      return typeof window.startRecording === 'function';
     });
-
-    if (!isSceneReady) {
-      throw new Error('Scene failed to initialize');
-    }
-
-    console.log(`Scene is ready, capturing ${numFrames} frames...`);
     
-    for (let i = 0; i < numFrames; i++) {
-      const fileName = path.join(
-        config.directories.frames, 
-        `frame-${String(i).padStart(4, '0')}.png`
-      );
-      
-      await page.screenshot({
-        path: fileName,
-        type: 'png'
-      });
-      
-      console.log(`Captured frame ${i + 1}/${numFrames}`);
-      // await delay(1000 / fps);
+    if (!hasRecordingFunction) {
+      throw new Error('startRecording function not found in browser context');
     }
     
-    console.log('Frame capture complete');
+    console.log(`Scene is ready, starting recording for ${duration} seconds at ${fps} FPS...`);
+    
+    await page.evaluate((duration, fps) => {
+      window.recordingPromise = window.startRecording(duration, fps);
+    }, duration, fps);
+    
+    await delay((duration * 1000) + 500);
+  
+    const buffer = await page.evaluate(async () => {
+      try {
+        const blob = await window.recordingPromise;
+        const arrayBuffer = await blob.arrayBuffer();
+        
+        return Array.from(new Uint8Array(arrayBuffer));
+      } catch (error) {
+        console.error('Error in browser context:', error);
+        throw error;
+      }
+    });
+    const tempWebmPath = path.join(config.directories.output, `temp-${Date.now()}.webm`);
+    fs.writeFileSync(tempWebmPath, Buffer.from(buffer));
+    
+    const mp4Path = path.join(config.directories.output, `output-${Date.now()}.mp4`);
+    await convertWebmToMp4(tempWebmPath, mp4Path);
+    fs.unlinkSync(tempWebmPath);
+    
+    console.log(`Recording complete. Video saved to: ${mp4Path}`);
+    return mp4Path;
+
   } catch (error) {
     console.error('Error during capture:', error);
     throw error;
@@ -93,6 +113,6 @@ async function captureFrames(duration, fps = config.ffmpeg.frameRate) {
 }
 
 module.exports = {
-  captureFrames,
+  captureVideo,
   setModelParams
 };
