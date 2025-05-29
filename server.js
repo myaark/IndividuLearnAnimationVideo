@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const path = require('path');
 const config = require('./config/config');
 const apiRoutes = require('./routes/videoCreationRoutes');
