@@ -2,7 +2,7 @@ const path = require("path");
 require("dotenv").config();
 const fs = require("fs");
 
-const API_KEY = "sk_44d0015755a06c415f12f35d091543286e42c693b6ab266e";
+const API_KEY = "sk_fe24a18baf02663523562cf5e5643fb78fe5813c2c0f5b72";
 const VOICE_ID = "EXAVITQu4vr4xnSDxMaL";
 
 async function textToSpeech(text) {
