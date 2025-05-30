@@ -16,7 +16,8 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
   try {
       // Extract text from request body
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
-      const cleanedText = cleanText(textToConvert)
+      const cleanedText = textToConvert
+    //   console.log(cleanedText)
       const emotionPrediction = await sendTextForPrediction(cleanedText);
       const emotions = emotionPrediction.emotionsArray;
 
@@ -109,7 +110,7 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
 router.post('/create-3dvideo-with-audio', express.json(), async (req, res) => {
   try {
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
-      const cleanedText = cleanText(textToConvert)
+      const cleanedText = (textToConvert)
       const audioPath = await textToSpeech(cleanedText);
       console.log(audioPath)
 
