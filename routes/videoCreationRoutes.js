@@ -17,7 +17,6 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
       // Extract text from request body
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
       const cleanedText = textToConvert
-    //   console.log(cleanedText)
       const emotionPrediction = await sendTextForPrediction(cleanedText);
       const emotions = emotionPrediction.emotionsArray;
 
@@ -28,12 +27,12 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
       // Get model parameters
       const hairColor = req.query.hair || "BLACK";
       const shirtColor = req.query.shirt || "BLACK";
-      
+      const character = req.query.character || "CHAR1";
       // Set model params for reference (in case needed elsewhere)
       captureService.setModelParams({
           hair: hairColor,
           shirt: shirtColor,
-          face: req.query.face
+          face: character
       });
 
       await directoryService.setupDirectories();
@@ -44,8 +43,9 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
       
       // Define video files based on hair and shirt parameters only
       const videoFiles = [
-          `public/animations/happyHAIR${hairColor}SHIRT${shirtColor}.mp4`,
-          `public/animations/neutralHAIR${hairColor}SHIRT${shirtColor}.mp4`
+          `public/animations/HAPPY${character}HAIR${hairColor}SHIRT${shirtColor}.mp4`,
+          `public/animations/EXCITED${character}HAIR${hairColor}SHIRT${shirtColor}.mp4`,
+          `public/animations/IDLE${character}HAIR${hairColor}SHIRT${shirtColor}.mp4`
       ];
       
       // Create output filename
@@ -110,7 +110,7 @@ router.post('/create-2dvideo-with-audio', express.json(), async (req, res) => {
 router.post('/create-3dvideo-with-audio', express.json(), async (req, res) => {
   try {
       const textToConvert = req.body.text || "Hello, this is a sample audio from Eleven Labs.";
-      const cleanedText = (textToConvert)
+      const cleanedText = textToConvert
       const audioPath = await textToSpeech(cleanedText);
       console.log(audioPath)
 
